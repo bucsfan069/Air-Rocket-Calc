@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Air Rocket Flight Lab</title>
+<meta name="description" content="Design an air rocket in Tinkercad, check its stability, and predict its flight off a compressed-air launcher.">
+<meta name="theme-color" content="#C8352E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{
+  color-scheme: light;
+  --page:#EEF3F7; --panel:#FFFFFF; --ink:#1B2733; --muted:#5B6B7A; --line:#D3DCE4;
+  --red:#C8352E; --red-ink:#FFFFFF; --blue:#2C6CB0; --grass:#4F7F3C; --skytop:#D2E4F2; --skylow:#F4F8FB;
+  --hull:#8FA6BC; --warn-bg:#FFF4E0; --warn-ink:#7A4A00;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --page:#0E161E; --panel:#16212B; --ink:#E5ECF2; --muted:#98A8B6; --line:#2A3946;
+    --red:#EE5A52; --red-ink:#1A0B0A; --blue:#6EA8E6; --grass:#6FA35A; --skytop:#122233; --skylow:#1A2733;
+    --hull:#7C93A8; --warn-bg:#3A2A10; --warn-ink:#F3C77A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#0E161E; --panel:#16212B; --ink:#E5ECF2; --muted:#98A8B6; --line:#2A3946;
+  --red:#EE5A52; --red-ink:#1A0B0A; --blue:#6EA8E6; --grass:#6FA35A; --skytop:#122233; --skylow:#1A2733;
+  --hull:#7C93A8; --warn-bg:#3A2A10; --warn-ink:#F3C77A;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:inherit;}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.5 "Barlow","Segoe UI",system-ui,-apple-system,sans-serif;}
+h1,h2,h3{font-family:"Barlow Condensed","Arial Narrow","Segoe UI",sans-serif;font-weight:600;line-height:1.1;margin:0;}
+header{max-width:1320px;margin:0 auto;padding:28px 24px 12px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 28px;}
+header h1{font-size:2.6rem;font-weight:700;letter-spacing:.01em;}
+header p{margin:0;color:var(--muted);max-width:62ch;}
+main{max-width:1320px;margin:0 auto;padding:12px 24px 40px;display:grid;grid-template-columns:minmax(300px,400px) 1fr;gap:24px;align-items:start;}
+@media (max-width:900px){main{grid-template-columns:1fr;} header h1{font-size:2.1rem;}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;}
+.controls{display:flex;flex-direction:column;gap:16px;}
+.panel h2{font-size:1.35rem;margin-bottom:10px;}
+.drop{display:block;border:2px dashed var(--line);border-radius:8px;padding:16px;text-align:center;cursor:pointer;color:var(--muted);}
+.drop:hover,.drop.over{border-color:var(--blue);color:var(--ink);}
+.drop strong{color:var(--ink);font-weight:600;}
+.drop input{position:absolute;width:1px;height:1px;opacity:0;}
+.drop:focus-within{outline:3px solid var(--blue);outline-offset:2px;}
+.filename{margin:8px 0 0;font-size:.9rem;color:var(--muted);overflow-wrap:anywhere;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+#viewer{position:relative;height:190px;margin-top:12px;border-radius:8px;background:var(--skylow);overflow:hidden;touch-action:none;}
+#viewer canvas{display:block;width:100%;height:100%;}
+#viewer .hint{position:absolute;right:8px;bottom:6px;font-size:.75rem;color:var(--muted);pointer-events:none;}
+#profile{display:block;width:100%;height:150px;margin-top:10px;}
+.stats{display:grid;grid-template-columns:1fr;gap:0;margin:12px 0 0;}
+.stats div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:3px 0;font-size:.95rem;}
+.stats dt{color:var(--muted);}
+.stats dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums;}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-weight:600;font-size:.95rem;}
+.b-stable{background:color-mix(in srgb,var(--grass) 22%,transparent);color:var(--ink);}
+.b-marginal,.b-over{background:var(--warn-bg);color:var(--warn-ink);}
+.b-unstable{background:color-mix(in srgb,var(--red) 22%,transparent);color:var(--ink);}
+.stab-line{margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.95rem;}
+.warn{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+.warn li{background:var(--warn-bg);color:var(--warn-ink);border-radius:6px;padding:7px 10px;font-size:.9rem;}
+.field{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;margin-top:10px;}
+.field label{font-size:.95rem;}
+.field output,.field .unit{font-weight:600;font-variant-numeric:tabular-nums;font-size:.95rem;}
+.field input[type=range]{grid-column:1 / -1;width:100%;accent-color:var(--blue);}
+.field small{grid-column:1 / -1;color:var(--muted);font-size:.82rem;}
+.num{display:flex;align-items:center;gap:6px;}
+input[type=number],select{font:inherit;font-size:.95rem;color:var(--ink);background:var(--page);border:1px solid var(--line);border-radius:6px;padding:4px 8px;width:96px;}
+select{width:auto;}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
+button{font:inherit;font-weight:600;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px;cursor:pointer;}
+button:hover{border-color:var(--blue);}
+button.primary{background:var(--red);border-color:var(--red);color:var(--red-ink);font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:1.25rem;padding:8px 26px;letter-spacing:.02em;}
+button.primary:hover{filter:brightness(1.07);}
+button.link{border:none;background:none;color:var(--blue);padding:0;font-weight:500;text-decoration:underline;}
+details.panel summary{cursor:pointer;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:1.35rem;font-weight:600;}
+details.panel p{color:var(--muted);font-size:.9rem;margin:8px 0 0;}
+.flight{display:flex;flex-direction:column;gap:16px;min-width:0;}
+.flight .panel{padding:0;overflow:hidden;}
+#flight{display:block;width:100%;}
+.bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:14px 18px;border-top:1px solid var(--line);}
+.bar .mode{margin-left:auto;}
+.log{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin:0;border-top:1px solid var(--line);}
+.log div{padding:12px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);}
+.log dt{color:var(--muted);font-size:.88rem;}
+.log dd{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:1.7rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15;}
+.log dd span{font-family:"Barlow",sans-serif;font-size:.85rem;font-weight:500;color:var(--muted);margin-left:4px;}
+.flight .panel.compare{padding:16px 18px;}
+.compare h2{font-size:1.35rem;margin-bottom:8px;}
+.tablewrap{overflow-x:auto;}
+table{border-collapse:collapse;width:100%;font-size:.95rem;font-variant-numeric:tabular-nums;}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+th{color:var(--muted);font-weight:500;}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:-1px;}
+.empty{color:var(--muted);font-size:.95rem;margin:0;}
+.flight .panel.notes{padding:16px 18px;}
+.notes summary{cursor:pointer;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:1.35rem;font-weight:600;}
+.notes p{max-width:72ch;margin:10px 0 0;font-size:.95rem;}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Air Rocket Flight Lab</h1>
+  <p>Load a rocket you designed in Tinkercad, check whether it’s stable, and predict how it flies off the launcher before you print it.</p>
+</header>
+
+<main>
+  <aside class="controls">
+    <section class="panel" aria-labelledby="h-rocket">
+      <h2 id="h-rocket">Your rocket</h2>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept=".stl">
+        <strong>Choose an STL file</strong> or drop it here<br>
+        <span style="font-size:.85rem">Export from Tinkercad in millimeters</span>
+      </label>
+      <p class="filename" id="filename">Showing the sample rocket</p>
+      <div class="row">
+        <label for="axis">Long axis</label>
+        <select id="axis">
+          <option value="auto">Detect</option>
+          <option value="x">X</option>
+          <option value="y">Y</option>
+          <option value="z">Z</option>
+        </select>
+        <button id="flip" type="button">Swap nose and tail</button>
+        <button id="sample" type="button" class="link">Use sample</button>
+      </div>
+      <div id="viewer" aria-label="3D view of the rocket. Drag to rotate."><span class="hint">Drag to rotate</span></div>
+      <canvas id="profile" aria-label="Side profile with center of gravity and center of pressure"></canvas>
+      <div class="stab-line"><span>Stability</span><span id="stabBadge" class="badge">–</span><span id="stabNote" style="color:var(--muted)"></span></div>
+      <dl class="stats">
+        <div><dt>Length</dt><dd id="sLen">–</dd></div>
+        <div><dt>Body diameter</dt><dd id="sDia">–</dd></div>
+        <div><dt>Launch bore depth</dt><dd id="sBore">–</dd></div>
+        <div><dt>Bore diameter</dt><dd id="sBoreD">–</dd></div>
+        <div><dt>Mass</dt><dd id="sMass">–</dd></div>
+        <div><dt>Fins found</dt><dd id="sFins">–</dd></div>
+      </dl>
+      <ul class="warn" id="warnings"></ul>
+    </section>
+
+    <section class="panel" aria-labelledby="h-print">
+      <h2 id="h-print">Print settings</h2>
+      <div class="field"><label for="mat">Material</label>
+        <select id="mat" data-sim><option value="1.24">PLA</option><option value="1.27">PETG</option><option value="1.04">ABS</option></select></div>
+      <div class="field"><label for="wall">Wall thickness</label><span class="num"><input type="number" id="wall" value="0.8" min="0.2" max="5" step="0.1" data-sim> mm</span></div>
+      <div class="field"><label for="infill">Infill</label><span class="num"><input type="number" id="infill" value="15" min="0" max="100" step="5" data-sim> %</span></div>
+      <div class="field"><label for="noseMass">Weight added in the nose</label><span class="num"><input type="number" id="noseMass" value="0" min="0" max="200" step="1" data-sim> g</span>
+        <small>A foam nose, clay or a coin. Moves the center of gravity forward.</small></div>
+      <div class="field"><label for="weighed">Weighed mass of the finished rocket</label><span class="num"><input type="number" id="weighed" placeholder="optional" min="0" max="500" step="0.1" data-sim> g</span>
+        <small>After printing, weigh it and enter the real number here. It beats the estimate.</small></div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-flight">
+      <h2 id="h-flight">Flight</h2>
+      <div class="field"><label for="angle">Launch angle</label><output id="angleOut" for="angle"></output>
+        <input type="range" id="angle" min="10" max="90" step="1" value="60" data-sim></div>
+      <div class="field"><label for="wind">Wind</label><output id="windOut" for="wind"></output>
+        <input type="range" id="wind" min="-8" max="8" step="0.5" value="0" data-sim>
+        <small>Positive blows downrange (tailwind), negative blows back toward you.</small></div>
+      <div class="field"><label for="cd">Drag coefficient</label><output id="cdOut" for="cd"></output>
+        <input type="range" id="cd" min="0.3" max="1.2" step="0.01" value="0.6" data-sim>
+        <small>Starts from an estimate based on your nose shape. <button type="button" class="link" id="cdReset">Reset to estimate</button></small></div>
+    </section>
+
+    <details class="panel">
+      <summary>Launcher setup</summary>
+      <p>Set these once for your class launcher. They stay the same for every rocket.</p>
+      <div class="field"><label for="psi">Launch pressure</label><span class="num"><input type="number" id="psi" value="60" min="5" max="120" step="1" data-sim> psi</span></div>
+      <div class="field"><label for="tank">Tank volume</label><span class="num"><input type="number" id="tank" value="400" min="50" max="5000" step="10" data-sim> mL</span>
+        <small>Measure by filling the empty tank with water.</small></div>
+      <div class="field"><label for="tubeLen">Launch tube length</label><span class="num"><input type="number" id="tubeLen" value="305" min="50" max="1000" step="1" data-sim> mm</span></div>
+      <div class="field"><label for="tubeD">Rocket bore diameter</label><span class="num"><input type="number" id="tubeD" value="21" min="5" max="60" step="0.1" data-sim> mm</span>
+        <small>The air pushes on this circle. 21 mm fits the ½″ schedule 80 launch tube.</small></div>
+      <div class="field"><label for="eff">Launcher efficiency</label><span class="num"><input type="number" id="eff" value="60" min="10" max="100" step="1" data-sim> %</span>
+        <small>Covers valve losses, air leaking past the rocket and friction. Tune it so predictions match real launches.</small></div>
+      <div class="field"><label for="rho">Air density</label><span class="num"><input type="number" id="rho" value="1.225" min="0.5" max="1.5" step="0.005" data-sim> kg/m³</span></div>
+    </details>
+  </aside>
+
+  <section class="flight" aria-label="Flight prediction">
+    <div class="panel">
+      <canvas id="flight" aria-label="Predicted flight path"></canvas>
+      <div class="bar">
+        <button class="primary" id="launch" type="button">Launch</button>
+        <button id="save" type="button">Save to compare</button>
+        <span class="mode" id="modeNote"></span>
+      </div>
+      <dl class="log">
+        <div><dt>Peak height</dt><dd id="rApo">–</dd></div>
+        <div><dt>Distance downrange</dt><dd id="rRange">–</dd></div>
+        <div><dt>Time in the air</dt><dd id="rTime">–</dd></div>
+        <div><dt>Speed leaving the tube</dt><dd id="rV0">–</dd></div>
+        <div><dt>Top acceleration</dt><dd id="rG">–</dd></div>
+      </dl>
+    </div>
+
+    <div class="panel compare">
+      <h2>Compare designs</h2>
+      <p class="empty" id="cmpEmpty">Save a few runs to see them side by side. Try changing one thing at a time.</p>
+      <div class="tablewrap"><table id="cmp" hidden>
+        <thead><tr><th>Run</th><th>Angle</th><th>Mass</th><th>Stability</th><th>Peak height</th><th>Distance</th><th>Air time</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <details class="panel notes">
+      <summary>How the model works</summary>
+      <p><strong>Shape.</strong> The STL is sliced into 240 cross sections along its long axis. Each slice gives the body width, the side silhouette, and whether the center is hollow, which is how the launch bore is found.</p>
+      <p><strong>Center of pressure.</strong> The app finds the fins (how many, their span, root and tip chord) and uses the Barrowman equations, the same method model rocketeers use. If it can’t find fins, it falls back to the cardboard cutout method: the balance point of the side silhouette, which is more cautious.</p>
+      <p><strong>Mass and center of gravity.</strong> Estimated from the walls and infill your slicer would print. Enter a weighed mass once you have one.</p>
+      <p><strong>Launch.</strong> Tank air expands as it pushes on the bore area while the rocket slides up the tube. The push lasts for the bore depth or the tube length, whichever is shorter, so a deeper bore gives a longer push.</p>
+      <p><strong>Flight.</strong> Gravity plus air drag, stepped every millisecond. Rockets with negative stability tumble, which adds a lot of drag.</p>
+      <p><strong>Calibrate it.</strong> Measure real peak heights with a clinometer, then adjust the efficiency and drag coefficient until the model matches.</p>
+    </details>
+  </section>
+</main>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const PATM = 101325, G0 = 9.81;
+const RUN_COLORS = ['#2C6CB0','#4F7F3C','#8A5BB8','#D08A1F','#1F9C9C','#B5487A'];
+const S = { tris:null, name:'Sample rocket', geo:null, flip:false, mass:null, run:null, runs:[], anim:null, cdEst:0.6 };
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (x,d=1) => (isFinite(x) ? x.toFixed(d) : '–');
+
+/* ---------- STL parsing ---------- */
+function parseSTL(buf){
+  const dv = new DataView(buf);
+  if (buf.byteLength >= 84){
+    const n = dv.getUint32(80, true);
+    if (84 + n*50 === buf.byteLength){
+      const out = new Float32Array(n*9);
+      for (let i=0;i<n;i++){ const o = 84 + i*50 + 12; for (let k=0;k<9;k++) out[i*9+k] = dv.getFloat32(o+k*4, true); }
+      return out;
+    }
+  }
+  const text = new TextDecoder().decode(buf);
+  const re = /vertex\s+([-+\d.eE]+)\s+([-+\d.eE]+)\s+([-+\d.eE]+)/g;
+  const v = []; let m;
+  while ((m = re.exec(text))) v.push(+m[1], +m[2], +m[3]);
+  if (v.length < 9) throw new Error('This file has no triangles. Export it again from Tinkercad as .STL.');
+  return new Float32Array(v.slice(0, v.length - v.length % 9));
+}
+
+/* ---------- Sample rocket ---------- */
+function fixOrientation(arr){
+  let vol = 0;
+  for (let i=0;i<arr.length;i+=9){
+    const ax=arr[i],ay=arr[i+1],az=arr[i+2],bx=arr[i+3],by=arr[i+4],bz=arr[i+5],cx=arr[i+6],cy=arr[i+7],cz=arr[i+8];
+    vol += ax*(by*cz-bz*cy) - ay*(bx*cz-bz*cx) + az*(bx*cy-by*cx);
+  }
+  if (vol < 0){
+    for (let i=0;i<arr.length;i+=9){ for (let k=0;k<3;k++){ const t=arr[i+3+k]; arr[i+3+k]=arr[i+6+k]; arr[i+6+k]=t; } }
+  }
+  return arr;
+}
+function makeSample(){
+  const R = 12.5, out = [];
+  const prof = [[10.5,0],[R,0],[R,170]];
+  for (let i=1;i<=16;i++){ const t=i/16; prof.push([R*(1-t*t), 170+60*t]); }
+  prof.push([0,150],[10.5,150]);
+  const seg = 48, lathe = [];
+  for (let j=0;j<prof.length;j++){
+    const [r1,y1] = prof[j], [r2,y2] = prof[(j+1)%prof.length];
+    for (let k=0;k<seg;k++){
+      const a0=k/seg*2*Math.PI, a1=(k+1)/seg*2*Math.PI;
+      const A=[r1*Math.cos(a0),y1,r1*Math.sin(a0)], B=[r2*Math.cos(a0),y2,r2*Math.sin(a0)];
+      const C=[r2*Math.cos(a1),y2,r2*Math.sin(a1)], D=[r1*Math.cos(a1),y1,r1*Math.sin(a1)];
+      lathe.push(...A,...B,...C, ...A,...C,...D);
+    }
+  }
+  out.push(...fixOrientation(new Float32Array(lathe)));
+  const poly = [[11.5,0],[46,6],[46,32],[11.5,60]], th = 1;
+  for (let f=0; f<3; f++){
+    const ang = f*2*Math.PI/3, c=Math.cos(ang), s=Math.sin(ang);
+    const P = (rho,y,tau) => [rho*c - tau*s, y, rho*s + tau*c];
+    const top = poly.map(p=>P(p[0],p[1],th)), bot = poly.map(p=>P(p[0],p[1],-th));
+    const fin = [];
+    fin.push(...top[0],...top[1],...top[2], ...top[0],...top[2],...top[3]);
+    fin.push(...bot[0],...bot[2],...bot[1], ...bot[0],...bot[3],...bot[2]);
+    for (let i=0;i<4;i++){ const j=(i+1)%4; fin.push(...top[i],...bot[i],...bot[j], ...top[i],...bot[j],...top[j]); }
+    out.push(...fixOrientation(new Float32Array(fin)));
+  }
+  return new Float32Array(out);
+}
+
+/* ---------- Geometry analysis ---------- */
+function analyze(T, axisSel, flip){
+  const mn=[Infinity,Infinity,Infinity], mx=[-Infinity,-Infinity,-Infinity];
+  for (let i=0;i<T.length;i+=3) for (let k=0;k<3;k++){ const v=T[i+k]; if(v<mn[k])mn[k]=v; if(v>mx[k])mx[k]=v; }
+  const ext=[mx[0]-mn[0], mx[1]-mn[1], mx[2]-mn[2]];
+  const a = axisSel==='auto' ? ext.indexOf(Math.max(...ext)) : {x:0,y:1,z:2}[axisSel];
+  const u=(a+1)%3, w=(a+2)%3;
+  // volume, volume centroid, surface area, area centroid
+  let vol=0, area=0; const vc=[0,0,0]; let aC=0;
+  for (let t=0;t<T.length;t+=9){
+    const ax=T[t],ay=T[t+1],az=T[t+2],bx=T[t+3],by=T[t+4],bz=T[t+5],cx=T[t+6],cy=T[t+7],cz=T[t+8];
+    const sv=(ax*(by*cz-bz*cy) - ay*(bx*cz-bz*cx) + az*(bx*cy-by*cx))/6;
+    vol+=sv; vc[0]+=sv*(ax+bx+cx)/4; vc[1]+=sv*(ay+by+cy)/4; vc[2]+=sv*(az+bz+cz)/4;
+    const e1x=bx-ax,e1y=by-ay,e1z=bz-az,e2x=cx-ax,e2y=cy-ay,e2z=cz-az;
+    const ar=0.5*Math.hypot(e1y*e2z-e1z*e2y, e1z*e2x-e1x*e2z, e1x*e2y-e1y*e2x);
+    area+=ar; aC+=ar*(T[t+a]+T[t+3+a]+T[t+6+a])/3;
+  }
+  if (Math.abs(vol)<1e-9) throw new Error('the model has no volume. Make sure it is a closed solid.');
+  const cen=[vc[0]/vol, vc[1]/vol, vc[2]/vol];
+  vol=Math.abs(vol);
+  const cu=cen[u] + 1.3e-4*(ext[u]||1), cw=cen[w] + 1.7e-4*(ext[w]||1);
+  const L=ext[a], N=240, ds=L/N;
+  const minU=new Float64Array(N).fill(Infinity), maxU=new Float64Array(N).fill(-Infinity);
+  const minW=new Float64Array(N).fill(Infinity), maxW=new Float64Array(N).fill(-Infinity);
+  const minR=new Float64Array(N).fill(Infinity), maxR=new Float64Array(N);
+  const cross=new Int32Array(N), hit=new Uint8Array(N);
+  const p=[[0,0,0],[0,0,0],[0,0,0]];
+  const sliceTri=(t,z,cb)=>{
+    const pts=[];
+    for (let e=0;e<3;e++){
+      const P=p[e], Q=p[(e+1)%3], dp=P[a]-z, dq=Q[a]-z;
+      if (dp*dq<0){ const f=dp/(dp-dq); pts.push(P[u]+(Q[u]-P[u])*f - cu, P[w]+(Q[w]-P[w])*f - cw); }
+    }
+    if (pts.length===4) cb(pts);
+  };
+  const load=t=>{ for (let q=0;q<3;q++){ p[q][0]=T[t+q*3]; p[q][1]=T[t+q*3+1]; p[q][2]=T[t+q*3+2]; } };
+  for (let t=0;t<T.length;t+=9){
+    load(t);
+    const lo=Math.min(p[0][a],p[1][a],p[2][a]), hi=Math.max(p[0][a],p[1][a],p[2][a]);
+    const i0=Math.max(0,Math.ceil((lo-mn[a])/ds-0.5)), i1=Math.min(N-1,Math.floor((hi-mn[a])/ds-0.5));
+    for (let i=i0;i<=i1;i++){
+      sliceTri(t, mn[a]+(i+0.5)*ds, pts=>{
+        hit[i]=1;
+        for (let k=0;k<4;k+=2){
+          const pu=pts[k], pw=pts[k+1], r=Math.hypot(pu,pw);
+          if(pu<minU[i])minU[i]=pu; if(pu>maxU[i])maxU[i]=pu;
+          if(pw<minW[i])minW[i]=pw; if(pw>maxW[i])maxW[i]=pw;
+          if(r<minR[i])minR[i]=r; if(r>maxR[i])maxR[i]=r;
+        }
+        const [u1,w1,u2,w2]=pts;
+        if ((w1>0)!==(w2>0)){ const ui=u1-w1*(u2-u1)/(w2-w1); if (ui>0) cross[i]++; }
+      });
+    }
+  }
+  // order stations from nose (s=0) to tail (s=L)
+  const avgEnd=(from,to)=>{ let s=0,n=0; for(let i=from;i<to;i++){ if(hit[i]){s+=maxR[i];n++;} } return n?s/n:Infinity; };
+  const k5=Math.max(2,Math.round(N*0.04));
+  let noseAtMax = avgEnd(N-k5,N) < avgEnd(0,k5);
+  if (flip) noseAtMax=!noseAtMax;
+  const idx=j=>noseAtMax ? N-1-j : j;
+  const toS=x=>noseAtMax ? mx[a]-x : x-mn[a];
+  const s=[], mR=[], mnR=[], hollow=[], wU=[], wW=[];
+  for (let j=0;j<N;j++){
+    const i=idx(j); s.push((j+0.5)*ds);
+    if (hit[i]){ wU.push(maxU[i]-minU[i]); wW.push(maxW[i]-minW[i]); mR.push(maxR[i]); mnR.push(minR[i]); hollow.push(cross[i]%2===0); }
+    else { wU.push(0); wW.push(0); mR.push(0); mnR.push(0); hollow.push(false); }
+  }
+  const useU = wU.reduce((x,y)=>x+y,0) >= wW.reduce((x,y)=>x+y,0);
+  const hwTop=[], hwBot=[];
+  for (let j=0;j<N;j++){ const i=idx(j); hwTop.push(hit[i]?(useU?maxU[i]:maxW[i]):0); hwBot.push(hit[i]?(useU?minU[i]:minW[i]):0); }
+  const width=useU?wU:wW;
+  let sideA=0, sideM=0;
+  for (let j=0;j<N;j++){ sideA+=width[j]*ds; sideM+=width[j]*ds*s[j]; }
+  const cpCutout=sideM/sideA;
+  const mid=mR.slice(Math.floor(N*0.2), Math.ceil(N*0.7)).filter(x=>x>0).sort((x,y)=>x-y);
+  const bodyR = mid.length ? mid[Math.floor(mid.length/2)] : Math.max(...mR);
+  let noseLen=L, noseFull=L;
+  for (let j=0;j<N;j++){ if (mR[j]>=0.9*bodyR){ noseLen=s[j]; break; } }
+  for (let j=0;j<N;j++){ if (mR[j]>=0.98*bodyR){ noseFull=s[j]; break; } }
+  let boreN=0; for (let j=N-1;j>=0;j--){ if (hollow[j] && mR[j]>0) boreN++; else break; }
+  const boreDepth=boreN*ds;
+  const inner=mnR.slice(N-boreN).filter(x=>x>0).sort((x,y)=>x-y);
+  const boreDia=inner.length ? 2*inner[Math.floor(inner.length/2)] : 0;
+
+  // ---- fins: stations where the outline sticks out past the body ----
+  const thr=bodyR + Math.max(1.5, bodyR*0.15);
+  let best=null, cur=null;
+  for (let j=0;j<N;j++){
+    if (s[j]>noseFull && mR[j]>thr){ if(!cur) cur={j0:j,j1:j}; else cur.j1=j; }
+    else if (cur){ if(!best || cur.j1-cur.j0>best.j1-best.j0) best=cur; cur=null; }
+  }
+  if (cur && (!best || cur.j1-cur.j0>best.j1-best.j0)) best=cur;
+  let fins=null, cp=cpCutout, cpMethod='cutout';
+  if (best && best.j1-best.j0>=2){
+    let span=0, jm=best.j0;
+    for (let j=best.j0;j<=best.j1;j++){ const e=mR[j]-bodyR; if (e>span){ span=e; jm=j; } }
+    let t0=-1,t1=-1; for (let j=best.j0;j<=best.j1;j++){ if (mR[j]-bodyR>=0.9*span){ if(t0<0)t0=j; t1=j; } }
+    const Xb=s[best.j0]-ds/2, Cr=(best.j1-best.j0+1)*ds, Ct=Math.max(ds,(t1-t0+1)*ds), Xr=s[t0]-ds/2-Xb;
+    // count fins by clustering angles at the widest station
+    const z=mn[a]+(idx(jm)+0.5)*ds, angs=[];
+    for (let t=0;t<T.length;t+=9){
+      load(t);
+      const lo=Math.min(p[0][a],p[1][a],p[2][a]), hi=Math.max(p[0][a],p[1][a],p[2][a]);
+      if (z<lo||z>hi) continue;
+      sliceTri(t,z,pts=>{ for (let k=0;k<4;k+=2){ if (Math.hypot(pts[k],pts[k+1])>bodyR+0.5*span) angs.push(Math.atan2(pts[k+1],pts[k])); } });
+    }
+    angs.sort((x,y)=>x-y);
+    let n=0;
+    if (angs.length){
+      n=1; for (let i=1;i<angs.length;i++) if (angs[i]-angs[i-1]>0.26) n++;
+      if (n>1 && (angs[0]+2*Math.PI)-angs[angs.length-1]<=0.26) n--;
+    }
+    n=Math.min(8,Math.max(1,n||3));
+    const d=2*bodyR, R=bodyR;
+    const lm=Math.hypot(span, Xr + (Ct-Cr)/2);
+    const K=1 + R/(span+R);
+    const CNf=K*(4*n*(span/d)**2)/(1+Math.sqrt(1+(2*lm/(Cr+Ct))**2));
+    const Xf=Xb + Xr*(Cr+2*Ct)/(3*(Cr+Ct)) + ((Cr+Ct) - Cr*Ct/(Cr+Ct))/6;
+    // nose: normal force 2, acting at the centroid of the nose's side area
+    let na=0, nm=0; for (let j=0;j<N && s[j]<=noseFull;j++){ na+=width[j]; nm+=width[j]*s[j]; }
+    const Xn = na>0 ? nm/na : 0.466*noseFull;
+    cp=(2*Xn + CNf*Xf)/(2+CNf);
+    cpMethod='barrowman';
+    fins={n, span, Cr, Ct, Xb};
+  }
+  return {
+    L, bodyR, boreDepth, boreDia, vol, area, cp, cpCutout, cpMethod, fins, sideArea:sideA, noseLen,
+    sVol: toS(cen[a]), sArea: toS(aC/area),
+    prof:{s, hwTop, hwBot}, a, u, w, cu, cw, mn, mx, noseAtMax, toS
+  };
+}
+
+/* ---------- Mass ---------- */
+function massProps(){
+  const g=S.geo;
+  const rho=parseFloat($('mat').value)*1e-3;
+  const wall=Math.max(0.1,parseFloat($('wall').value)||0.8);
+  const infill=Math.min(1,Math.max(0,(parseFloat($('infill').value)||0)/100));
+  const nose=Math.max(0,parseFloat($('noseMass').value)||0);
+  const weighed=parseFloat($('weighed').value);
+  const shellV=Math.min(g.area*wall, g.vol), infV=(g.vol-shellV)*infill;
+  const mPrint=rho*(shellV+infV);
+  const cgPrint=(shellV*g.sArea + infV*g.sVol)/((shellV+infV)||1);
+  let total, mBody;
+  if (weighed>0){ total=weighed; mBody=Math.max(weighed-nose, weighed*0.1); }
+  else { mBody=mPrint; total=mPrint+nose; }
+  const sN = Math.max(2, g.noseLen*0.35);
+  const noseUsed = total-mBody;
+  const cg = (mBody*cgPrint + noseUsed*sN)/total;
+  return { mPrint, total, cg, weighed: weighed>0 };
+}
+
+/* ---------- Simulation ---------- */
+function params(){
+  const g=S.geo, m=S.mass;
+  return {
+    m: m.total/1000,
+    Aref: Math.PI*(g.bodyR/1000)**2,
+    sideArea: g.sideArea*1e-6,
+    stab: (g.cp-m.cg)/(2*g.bodyR),
+    Cd: parseFloat($('cd').value),
+    angle: parseFloat($('angle').value),
+    wind: parseFloat($('wind').value),
+    psi: parseFloat($('psi').value)||60,
+    tankV: (parseFloat($('tank').value)||400)*1e-6,
+    tubeLen: (parseFloat($('tubeLen').value)||305)/1000,
+    boreD: (parseFloat($('tubeD').value)||21)/1000,
+    boreDepth: g.boreDepth/1000,
+    eff: (parseFloat($('eff').value)||60)/100,
+    rho: parseFloat($('rho').value)||1.225
+  };
+}
+function simulate(p){
+  const Ap=Math.PI*(p.boreD/2)**2;
+  const stroke=Math.min(p.boreDepth>0.005?p.boreDepth:p.tubeLen, p.tubeLen);
+  const V0=p.tankV + Math.PI*0.00695**2*p.tubeLen;
+  const th=p.angle*Math.PI/180, sn=Math.sin(th), cs=Math.cos(th);
+  const P0=p.psi*6894.76+PATM;
+  let x=0, v=0, t=0, amax=0; const dt=2e-5;
+  while (x<stroke && t<0.5){
+    const Pa=P0*Math.pow(V0/(V0+Ap*x),1.4);
+    const a=p.eff*(Pa-PATM)*Ap/p.m - G0*sn;
+    if (a<=0 && v<=0) return { fail:true };
+    if (a>amax) amax=a;
+    v+=a*dt; x+=v*dt; t+=dt;
+  }
+  const y0=0.15;
+  let px=stroke*cs, py=y0+stroke*sn, vx=v*cs, vy=v*sn;
+  let Cd=p.Cd, A=p.Aref, mode='stable';
+  if (p.stab<0){ mode='tumbling'; Cd=1.1; A=0.5*p.sideArea+0.5*p.Aref; }
+  else if (p.stab<1){ mode='marginal'; Cd*=1.15; }
+  const k=0.5*p.rho*Cd*A/p.m;
+  const acc=(vx,vy)=>{ const rx=vx-p.wind, ry=vy, sp=Math.hypot(rx,ry); return [-k*sp*rx, -G0-k*sp*ry]; };
+  const path=[[0,y0,0],[px,py,0]];
+  let apo=py, apoX=px, tApo=0, vmax=v, tf=0; const h=0.001;
+  for (let i=0;i<120000;i++){
+    const [ax1,ay1]=acc(vx,vy);
+    const mvx=vx+ax1*h/2, mvy=vy+ay1*h/2;
+    const [ax2,ay2]=acc(mvx,mvy);
+    const nx=px+mvx*h, ny=py+mvy*h;
+    vx+=ax2*h; vy+=ay2*h; tf+=h;
+    if (ny<=0){ const fr=py/(py-ny); px=px+(nx-px)*fr; tf=tf-h+h*fr; py=0; path.push([px,0,tf]); break; }
+    px=nx; py=ny;
+    if (py>apo){ apo=py; apoX=px; tApo=tf; }
+    const sp=Math.hypot(vx,vy); if (sp>vmax) vmax=sp;
+    if (i%8===0) path.push([px,py,tf]);
+  }
+  return { v0:v, amax, apo, apoX, tApo, range:px, tFlight:tf+t, tEnd:tf, vmax, path, mode, stroke };
+}
+
+/* ---------- 3D viewer ---------- */
+let V=null;
+function initViewer(){
+  if (!window.THREE || !THREE.OrbitControls) { $('viewer').innerHTML='<span class="hint" style="position:static;display:block;padding:12px">3D view unavailable. The analysis below still works.</span>'; return; }
+  const el=$('viewer');
+  const renderer=new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  el.prepend(renderer.domElement);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(30,1,0.1,20000);
+  const controls=new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping=true; controls.enablePan=false;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x556677,0.95));
+  const dl=new THREE.DirectionalLight(0xffffff,0.6); dl.position.set(1,2,3); scene.add(dl);
+  const group=new THREE.Group(); scene.add(group);
+  V={renderer,scene,camera,controls,group,el};
+  const resize=()=>{ const w=el.clientWidth||300, h=el.clientHeight||190; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); };
+  new ResizeObserver(resize).observe(el); resize();
+  (function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera); })();
+}
+function updateViewer(){
+  if (!V || !S.geo) return;
+  const g=S.geo, T=S.tris;
+  while (V.group.children.length){ const c=V.group.children.pop(); c.geometry&&c.geometry.dispose(); c.material&&c.material.dispose(); }
+  const pos=new Float32Array(T.length);
+  for (let i=0;i<T.length;i+=3){
+    const pt=[T[i],T[i+1],T[i+2]];
+    pos[i]=g.toS(pt[g.a]) - g.L/2;
+    pos[i+1]=pt[g.u]-g.cu;
+    pos[i+2]=pt[g.w]-g.cw;
+  }
+  const geom=new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  geom.computeVertexNormals();
+  const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(css('--hull')), roughness:0.6, metalness:0.05, transparent:true, opacity:0.55, side:THREE.DoubleSide, depthWrite:false});
+  V.group.add(new THREE.Mesh(geom,mat));
+  const r=Math.max(2, g.bodyR*0.45);
+  const mk=(color,sPos)=>{ const m=new THREE.Mesh(new THREE.SphereGeometry(r,24,16), new THREE.MeshBasicMaterial({color:new THREE.Color(color), depthTest:false, transparent:true, opacity:1})); m.position.set(sPos-g.L/2,0,0); m.renderOrder=10; V.group.add(m); };
+  if (S.mass){ mk(css('--blue'), S.mass.cg); mk(css('--red'), g.cp); }
+  const d=g.L*1.25;
+  V.camera.position.set(0, d*0.35, d*1.05);
+  V.camera.near=d/100; V.camera.far=d*20; V.camera.updateProjectionMatrix();
+  V.controls.target.set(0,0,0); V.controls.update();
+}
+
+/* ---------- Canvas helpers ---------- */
+function fitCanvas(c, h){
+  const dpr=window.devicePixelRatio||1, w=c.clientWidth;
+  c.style.height=h+'px'; c.width=Math.round(w*dpr); c.height=Math.round(h*dpr);
+  const ctx=c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w,h};
+}
+function cgSymbol(ctx,x,y,r,color){
+  ctx.save(); ctx.lineWidth=1.5; ctx.strokeStyle=color; ctx.fillStyle=css('--panel');
+  ctx.beginPath(); ctx.arc(x,y,r,0,2*Math.PI); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=color;
+  for (const q of [0,2]){ ctx.beginPath(); ctx.moveTo(x,y); ctx.arc(x,y,r,q*Math.PI/2,(q+1)*Math.PI/2); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+}
+function cpSymbol(ctx,x,y,r,color){
+  ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,2*Math.PI); ctx.fill();
+  ctx.fillStyle=css('--panel'); ctx.beginPath(); ctx.arc(x,y,r*0.35,0,2*Math.PI); ctx.fill(); ctx.restore();
+}
+
+/* ---------- Profile ---------- */
+function drawProfile(){
+  const {ctx,w,h}=fitCanvas($('profile'),150);
+  ctx.clearRect(0,0,w,h);
+  const g=S.geo; if (!g) return;
+  const {s,hwTop,hwBot}=g.prof;
+  const maxH=Math.max(...hwTop.map(Math.abs),...hwBot.map(Math.abs),1);
+  const sc=Math.min((w-24)/g.L, (h-56)/(2*maxH));
+  const x0=(w-g.L*sc)/2, cy=(h-40)/2+6;
+  const X=sv=>x0+sv*sc;
+  ctx.beginPath(); ctx.moveTo(X(0),cy);
+  for (let i=0;i<s.length;i++) ctx.lineTo(X(s[i]), cy-hwTop[i]*sc);
+  ctx.lineTo(X(g.L),cy);
+  for (let i=s.length-1;i>=0;i--) ctx.lineTo(X(s[i]), cy-hwBot[i]*sc);
+  ctx.closePath();
+  ctx.fillStyle=css('--skylow'); ctx.fill();
+  ctx.strokeStyle=css('--ink'); ctx.lineWidth=1.2; ctx.stroke();
+  if (g.boreDepth>0){
+    const bd=(parseFloat($('tubeD').value)||21)/2;
+    ctx.save(); ctx.setLineDash([4,3]); ctx.strokeStyle=css('--muted');
+    ctx.strokeRect(X(g.L-g.boreDepth), cy-bd*sc, g.boreDepth*sc, 2*bd*sc); ctx.restore();
+  }
+  ctx.save(); ctx.setLineDash([2,4]); ctx.strokeStyle=css('--line'); ctx.beginPath(); ctx.moveTo(X(0)-6,cy); ctx.lineTo(X(g.L)+6,cy); ctx.stroke(); ctx.restore();
+  if (S.mass){
+    const cgx=X(S.mass.cg), cpx=X(g.cp);
+    cgSymbol(ctx,cgx,cy,7,css('--blue')); cpSymbol(ctx,cpx,cy,6,css('--red'));
+    ctx.font='600 13px Barlow, system-ui, sans-serif'; ctx.textBaseline='top';
+    const lblY=h-30;
+    const cgLabel='CG '+fmt(S.mass.cg,0)+' mm', cpLabel='CP '+fmt(g.cp,0)+' mm';
+    ctx.fillStyle=css('--blue');
+    let lx=cgx, rx=cpx;
+    ctx.textAlign = cgx<=cpx ? 'right':'left';
+    ctx.fillText(cgLabel, cgx + (cgx<=cpx?-2:2), lblY);
+    ctx.fillStyle=css('--red'); ctx.textAlign = cgx<=cpx ? 'left':'right';
+    ctx.fillText(cpLabel, cpx + (cgx<=cpx?2:-2), lblY);
+    ctx.strokeStyle=css('--muted'); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cgx,cy+9); ctx.lineTo(cgx,lblY-2); ctx.moveTo(cpx,cy+8); ctx.lineTo(cpx,lblY-2); ctx.stroke();
+    ctx.fillStyle=css('--muted'); ctx.font='12px Barlow, system-ui, sans-serif'; ctx.textAlign='left';
+    ctx.fillText('nose', X(0), 2); ctx.textAlign='right'; ctx.fillText('tail', X(g.L), 2);
+  }
+}
+
+/* ---------- Flight canvas ---------- */
+function niceStep(range){ const raw=range/6, p=Math.pow(10,Math.floor(Math.log10(raw))); for (const m of [1,2,5,10]) if (raw<=m*p) return m*p; return 10*p; }
+function drawFlight(tNow){
+  const c=$('flight'); const cw=c.clientWidth||600;
+  const {ctx,w,h}=fitCanvas(c, Math.max(260, Math.min(480, cw*0.52)));
+  const runs=S.runs.slice(); const cur=S.run && !S.run.fail ? S.run : null;
+  let maxX=10, maxY=6, minX=0;
+  for (const r of runs.concat(cur?[cur]:[])){ maxX=Math.max(maxX,r.range*1.08, r.apoX*1.1); maxY=Math.max(maxY,r.apo*1.18); minX=Math.min(minX, r.range*1.08); }
+  const pl=46, pr=18, pt=18, pb=40;
+  const sc=Math.min((w-pl-pr)/(maxX-minX), (h-pt-pb)/maxY);
+  const X=x=>pl+(x-minX)*sc, Y=y=>h-pb-y*sc;
+  const grad=ctx.createLinearGradient(0,0,0,h-pb); grad.addColorStop(0,css('--skytop')); grad.addColorStop(1,css('--skylow'));
+  ctx.fillStyle=grad; ctx.fillRect(0,0,w,h-pb);
+  ctx.fillStyle=css('--grass'); ctx.fillRect(0,h-pb,w,4);
+  ctx.fillStyle=css('--panel'); ctx.fillRect(0,h-pb+4,w,pb);
+  const stepM=niceStep(Math.max((w-pl-pr)/sc,(h-pt-pb)/sc));
+  ctx.strokeStyle=css('--line'); ctx.lineWidth=1; ctx.fillStyle=css('--muted'); ctx.font='12px Barlow, system-ui, sans-serif';
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for (let y=stepM; Y(y)>pt-2; y+=stepM){ ctx.globalAlpha=0.7; ctx.beginPath(); ctx.moveTo(pl,Y(y)); ctx.lineTo(w-pr,Y(y)); ctx.stroke(); ctx.globalAlpha=1; ctx.fillText(+y.toFixed(2)+' m', pl-6, Y(y)); }
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for (let x=Math.ceil(minX/stepM)*stepM; X(x)<w-pr+1; x+=stepM){ ctx.fillText(+x.toFixed(2)+' m', X(x), h-pb+10); }
+  ctx.textAlign='left'; ctx.fillText('distance downrange', pl, h-16);
+  // launcher
+  const ang=parseFloat($('angle').value)*Math.PI/180;
+  ctx.strokeStyle=css('--ink'); ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(X(0),Y(0)); ctx.lineTo(X(0)+Math.cos(ang)*18, Y(0)-Math.sin(ang)*18); ctx.stroke();
+  ctx.fillStyle=css('--red'); ctx.fillRect(X(0)-10,Y(0)-6,20,6);
+  // wind
+  const wind=parseFloat($('wind').value);
+  if (wind!==0){ ctx.fillStyle=css('--muted'); ctx.textAlign='right'; ctx.textBaseline='top'; ctx.font='13px Barlow, system-ui, sans-serif'; ctx.fillText('wind '+Math.abs(wind)+' m/s '+(wind>0?'→':'←'), w-pr-4, pt); }
+  // saved runs
+  runs.forEach(r=>{ ctx.strokeStyle=r.color; ctx.lineWidth=2; ctx.globalAlpha=0.85; ctx.beginPath(); r.path.forEach((p,i)=>i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1]))); ctx.stroke(); ctx.globalAlpha=1; });
+  if (!cur){
+    if (S.run && S.run.fail){ ctx.fillStyle=css('--ink'); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='600 16px Barlow, system-ui, sans-serif'; ctx.fillText('This rocket is too heavy to leave the tube at this pressure.', w/2, (h-pb)/2); }
+    return;
+  }
+  const T=tNow==null?Infinity:tNow;
+  ctx.strokeStyle=css('--red'); ctx.lineWidth=3; ctx.lineJoin='round'; ctx.beginPath();
+  let last=cur.path[0], prev=cur.path[0]; ctx.moveTo(X(last[0]),Y(last[1]));
+  for (let i=1;i<cur.path.length;i++){
+    const p=cur.path[i];
+    if (p[2]>T){ const q=cur.path[i-1]; const f=(T-q[2])/((p[2]-q[2])||1); const ip=[q[0]+(p[0]-q[0])*f, q[1]+(p[1]-q[1])*f, T]; ctx.lineTo(X(ip[0]),Y(ip[1])); prev=q; last=ip; break; }
+    ctx.lineTo(X(p[0]),Y(p[1])); prev=last; last=p;
+  }
+  ctx.stroke();
+  const done = T>=cur.tEnd;
+  if (T>=cur.tApo){
+    ctx.save(); ctx.setLineDash([3,4]); ctx.strokeStyle=css('--muted'); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(X(cur.apoX),Y(cur.apo)); ctx.lineTo(X(cur.apoX),Y(0)); ctx.stroke(); ctx.restore();
+    ctx.fillStyle=css('--ink'); ctx.font='600 14px Barlow, system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText(fmt(cur.apo,1)+' m', X(cur.apoX), Y(cur.apo)-8);
+  }
+  if (!done){
+    const dx=last[0]-prev[0], dy=last[1]-prev[1], a=Math.atan2(-dy,dx);
+    ctx.save(); ctx.translate(X(last[0]),Y(last[1])); ctx.rotate(cur.mode==='tumbling'? T*25 : a);
+    ctx.fillStyle=css('--ink'); ctx.beginPath(); ctx.moveTo(9,0); ctx.lineTo(-7,-4); ctx.lineTo(-7,4); ctx.closePath(); ctx.fill(); ctx.restore();
+  } else {
+    ctx.fillStyle=css('--red'); ctx.beginPath(); ctx.arc(X(cur.range),Y(0),4,0,2*Math.PI); ctx.fill();
+  }
+}
+
+/* ---------- UI updates ---------- */
+function stabInfo(st){
+  if (st<0) return ['Unstable','b-unstable','It will tumble. Move weight forward or make the fins bigger.'];
+  if (st<1) return ['Marginal','b-marginal','Might wobble. Aim for at least 1 caliber.'];
+  if (st>3) return ['Overstable','b-over','Will turn hard into any wind.'];
+  return ['Stable','b-stable','Flies straight.'];
+}
+function renderStats(){
+  const g=S.geo, m=S.mass;
+  $('sLen').textContent=fmt(g.L,0)+' mm';
+  $('sDia').textContent=fmt(2*g.bodyR,1)+' mm';
+  $('sBore').textContent=g.boreDepth>0? fmt(g.boreDepth,0)+' mm' : 'none found';
+  $('sBoreD').textContent=g.boreDia>0? fmt(g.boreDia,1)+' mm' : '–';
+  $('sMass').textContent=fmt(m.total,1)+' g'+(m.weighed?'':' (est.)');
+  $('sFins').textContent=g.fins? g.fins.n+' × '+fmt(g.fins.span,0)+' mm span' : 'none';
+  const st=(g.cp-m.cg)/(2*g.bodyR);
+  const [label,cls,note]=stabInfo(st);
+  const b=$('stabBadge'); b.className='badge '+cls; b.textContent=label+' '+fmt(st,2)+' cal';
+  $('stabNote').textContent=note;
+  const warns=[];
+  if (g.L<40||g.L>1200) warns.push('This rocket is '+fmt(g.L,0)+' long. If that looks wrong, export it again from Tinkercad in millimeters.');
+  if (g.boreDepth<=0) warns.push('No launch bore found in the tail. The rocket needs a 21 mm hole up its base to fit on the launch tube.');
+  const td=parseFloat($('tubeD').value)||21;
+  if (g.boreDepth>0 && g.boreDia>0 && Math.abs(g.boreDia-td)>1) warns.push('The bore measures '+fmt(g.boreDia,1)+' mm but the launch tube needs '+fmt(td,1)+' mm.');
+  if (!g.fins) warns.push('No fins found, so the center of pressure uses the cautious cutout method.');
+  if (g.boreDepth>0 && 2*g.bodyR<td+1) warns.push('The body wall around the bore is very thin. It may split on launch.');
+  $('warnings').innerHTML=warns.map(t=>'<li>'+t+'</li>').join('');
+}
+function renderResults(){
+  const r=S.run;
+  const set=(id,v,unit,alt)=>{ $(id).innerHTML = v+'<span>'+unit+(alt?' ('+alt+')':'')+'</span>'; };
+  if (!r || r.fail){ ['rApo','rRange','rTime','rV0','rG'].forEach(id=>$(id).textContent='–'); $('modeNote').textContent= r&&r.fail ? 'Lower the mass or raise the pressure.' : ''; return; }
+  set('rApo', fmt(r.apo,1),' m', fmt(r.apo*3.281,0)+' ft');
+  set('rRange', fmt(Math.abs(r.range),1),' m', fmt(Math.abs(r.range)*3.281,0)+' ft');
+  set('rTime', fmt(r.tFlight,2),' s');
+  set('rV0', fmt(r.v0,1),' m/s', fmt(r.v0*2.237,0)+' mph');
+  set('rG', fmt(r.amax/G0,0),' g');
+  $('modeNote').textContent = r.mode==='tumbling' ? 'Unstable: modeled as tumbling.' : r.mode==='marginal' ? 'Marginal stability adds some drag.' : '';
+}
+function outputs(){
+  $('angleOut').textContent=$('angle').value+'°';
+  const wv=parseFloat($('wind').value); $('windOut').textContent=(wv>0?'+':'')+wv+' m/s';
+  $('cdOut').textContent=parseFloat($('cd').value).toFixed(2);
+}
+function recompute(){
+  outputs();
+  if (!S.geo) return;
+  S.mass=massProps();
+  renderStats(); drawProfile(); updateViewer();
+  S.run=simulate(params());
+  renderResults();
+  if (!S.anim) drawFlight(null);
+}
+function estimateCd(g){
+  const ratio=g.noseLen/(2*g.bodyR);
+  return ratio<0.6?0.75 : ratio<1.5?0.6 : 0.5;
+}
+function loadTris(tris, name){
+  S.tris=tris; S.name=name; S.flip=false; $('axis').value='auto';
+  reanalyze(true);
+}
+function reanalyze(resetCd){
+  try { S.geo=analyze(S.tris, $('axis').value, S.flip); }
+  catch(e){ $('warnings').innerHTML='<li>Could not read this model: '+e.message+'</li>'; return; }
+  S.cdEst=estimateCd(S.geo);
+  if (resetCd) $('cd').value=S.cdEst;
+  $('filename').textContent=S.name;
+  recompute();
+}
+function launch(){
+  if (!S.run || S.run.fail){ drawFlight(null); return; }
+  if (S.anim) cancelAnimationFrame(S.anim);
+  if (reduceMotion){ drawFlight(null); return; }
+  const start=performance.now(), end=S.run.tEnd;
+  const step=now=>{ const t=(now-start)/1000; drawFlight(t); if (t<end+0.05) S.anim=requestAnimationFrame(step); else { S.anim=null; drawFlight(null); } };
+  S.anim=requestAnimationFrame(step);
+}
+function renderCompare(){
+  const tb=$('cmp').querySelector('tbody');
+  $('cmp').hidden=!S.runs.length; $('cmpEmpty').hidden=!!S.runs.length;
+  tb.innerHTML=S.runs.map((r,i)=>'<tr><td><span class="sw" style="background:'+r.color+'"></span>'+r.label.replace(/</g,'&lt;')+'</td><td>'+r.angle+'°</td><td>'+fmt(r.mass,1)+' g</td><td>'+fmt(r.stab,2)+' cal</td><td>'+fmt(r.apo,1)+' m</td><td>'+fmt(Math.abs(r.range),1)+' m</td><td>'+fmt(r.tFlight,2)+' s</td><td><button type="button" class="link" data-del="'+i+'">Remove</button></td></tr>').join('');
+}
+
+/* ---------- Events ---------- */
+document.querySelectorAll('[data-sim]').forEach(el=>el.addEventListener('input', recompute));
+$('cdReset').addEventListener('click',()=>{ $('cd').value=S.cdEst; recompute(); });
+$('axis').addEventListener('change',()=>reanalyze(true));
+$('flip').addEventListener('click',()=>{ S.flip=!S.flip; reanalyze(true); });
+$('sample').addEventListener('click',()=>loadTris(makeSample(),'Sample rocket'));
+$('launch').addEventListener('click', launch);
+$('save').addEventListener('click',()=>{
+  if (!S.run || S.run.fail) return;
+  if (S.runs.length>=RUN_COLORS.length) S.runs.shift();
+  const used=new Set(S.runs.map(r=>r.color)); const color=RUN_COLORS.find(c=>!used.has(c));
+  S.runs.push({ ...S.run, color, label:S.name.replace(/\.stl$/i,''), angle:$('angle').value, mass:S.mass.total, stab:(S.geo.cp-S.mass.cg)/(2*S.geo.bodyR) });
+  renderCompare(); drawFlight(null);
+});
+$('cmp').addEventListener('click',e=>{ const i=e.target.getAttribute('data-del'); if (i!==null){ S.runs.splice(+i,1); renderCompare(); drawFlight(null); } });
+function readFile(f){
+  if (!f) return;
+  if (!/\.stl$/i.test(f.name)){ $('warnings').innerHTML='<li>That isn’t an STL file. In Tinkercad, choose Export, then .STL.</li>'; return; }
+  const rd=new FileReader();
+  rd.onload=()=>{ try { loadTris(parseSTL(rd.result), f.name); } catch(e){ $('warnings').innerHTML='<li>'+e.message+'</li>'; } };
+  rd.readAsArrayBuffer(f);
+}
+$('file').addEventListener('change',e=>readFile(e.target.files[0]));
+const drop=$('drop');
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop',e=>readFile(e.dataTransfer.files[0]));
+let rz; window.addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(()=>{ drawProfile(); if(!S.anim) drawFlight(null); },120); });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{ recompute(); });
+
+initViewer();
+loadTris(makeSample(),'Sample rocket');
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ drawProfile(); drawFlight(null); });
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
